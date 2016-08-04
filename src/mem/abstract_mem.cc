@@ -334,12 +334,123 @@ AbstractMemory::doMemGather(PacketPtr pkt)
     Addr addr = pkt->getAddr();
     int qwords = pkt->getSize() / 8;
     int patternId = pkt->req->getGatherPattern();
-    for (int i = 0; i < qwords; i++) {
-        Addr shuffle = SHUFFLE(addr + i * 8);
-        Addr pattern = PATTERN(shuffle, patternId);
-        Addr unshuffle = UNSHUFFLE(pattern);
-        uint8_t *hostAddr = pmemAddr + unshuffle - range.start();
-        pkt->getPtr<uint64_t>()[i] = *(uint64_t*)hostAddr;
+
+    // pattern ID 7 = stride of 8
+    if (patternId == 1) {
+        int stride = 2;
+        int logstride = 1;
+
+        Addr tableBaseAddr = (addr >> (6 + logstride)) << (6 + logstride);
+        int mask = (1 << logstride) - 1;
+        Addr cacheBlockId = addr >> 6;
+        Addr tupleId = cacheBlockId & mask;
+        Addr offset = (tupleId * 8);
+        int start = (addr >> 3) & 7;
+        for (int i = 0; i < qwords; i ++) {
+            uint8_t *hostAddr = pmemAddr + tableBaseAddr + offset +
+                stride*8*(start+i);
+            pkt->getPtr<uint64_t>()[i] = *(uint64_t*)hostAddr;
+        }
+    }
+
+    // use pattern ID 2 for stride of 16
+    else if (patternId == 2) {
+        int stride = 16;
+        int logstride = 4;
+
+        Addr tableBaseAddr = (addr >> (6 + logstride)) << (6 + logstride);
+        int mask = (1 << logstride) - 1;
+        Addr cacheBlockId = addr >> 6;
+        Addr tupleId = cacheBlockId & mask;
+        Addr offset = (tupleId * 8);
+        int start = (addr >> 3) & 7;
+        for (int i = 0; i < qwords; i ++) {
+            uint8_t *hostAddr = pmemAddr + tableBaseAddr + offset +
+                stride*8*(start+i);
+            pkt->getPtr<uint64_t>()[i] = *(uint64_t*)hostAddr;
+        }
+    }
+    
+    // pattern ID 7 = stride of 8
+    else if (patternId == 3) {
+        int stride = 4;
+        int logstride = 2;
+
+        Addr tableBaseAddr = (addr >> (6 + logstride)) << (6 + logstride);
+        int mask = (1 << logstride) - 1;
+        Addr cacheBlockId = addr >> 6;
+        Addr tupleId = cacheBlockId & mask;
+        Addr offset = (tupleId * 8);
+        int start = (addr >> 3) & 7;
+        for (int i = 0; i < qwords; i ++) {
+            uint8_t *hostAddr = pmemAddr + tableBaseAddr + offset +
+                stride*8*(start+i);
+            pkt->getPtr<uint64_t>()[i] = *(uint64_t*)hostAddr;
+        }
+    }
+
+    // Use pattern ID 5 to implement a stride of 32
+    else if (patternId == 5) {
+        int stride = 32;
+        int logstride = 5;
+
+        Addr tableBaseAddr = (addr >> (6 + logstride)) << (6 + logstride);
+        int mask = (1 << logstride) - 1;
+        Addr cacheBlockId = addr >> 6;
+        Addr tupleId = cacheBlockId & mask;
+        Addr offset = (tupleId * 8);
+        int start = (addr >> 3) & 7;
+        for (int i = 0; i < qwords; i ++) {
+            uint8_t *hostAddr = pmemAddr + tableBaseAddr + offset +
+                stride*8*(start+i);
+            pkt->getPtr<uint64_t>()[i] = *(uint64_t*)hostAddr;
+        }
+    }
+
+    // use pattern ID 6 to implement stride of 64
+    else if (patternId == 6) {
+        int stride = 64;
+        int logstride = 6;
+
+        Addr tableBaseAddr = (addr >> (6 + logstride)) << (6 + logstride);
+        int mask = (1 << logstride) - 1;
+        Addr cacheBlockId = addr >> 6;
+        Addr tupleId = cacheBlockId & mask;
+        Addr offset = (tupleId * 8);
+        int start = (addr >> 3) & 7;
+        for (int i = 0; i < qwords; i ++) {
+            uint8_t *hostAddr = pmemAddr + tableBaseAddr + offset +
+                stride*8*(start+i);
+            pkt->getPtr<uint64_t>()[i] = *(uint64_t*)hostAddr;
+        }
+    }
+
+    // pattern ID 7 = stride of 8
+    else if (patternId == 7) {
+        int stride = 8;
+        int logstride = 3;
+
+        Addr tableBaseAddr = (addr >> (6 + logstride)) << (6 + logstride);
+        int mask = (1 << logstride) - 1;
+        Addr cacheBlockId = addr >> 6;
+        Addr tupleId = cacheBlockId & mask;
+        Addr offset = (tupleId * 8);
+        int start = (addr >> 3) & 7;
+        for (int i = 0; i < qwords; i ++) {
+            uint8_t *hostAddr = pmemAddr + tableBaseAddr + offset +
+                stride*8*(start+i);
+            pkt->getPtr<uint64_t>()[i] = *(uint64_t*)hostAddr;
+        }
+    }
+
+    else {
+        for (int i = 0; i < qwords; i++) {
+            Addr shuffle = SHUFFLE(addr + i * 8);
+            Addr pattern = PATTERN(shuffle, patternId);
+            Addr unshuffle = UNSHUFFLE(pattern);
+            uint8_t *hostAddr = pmemAddr + unshuffle - range.start();
+            pkt->getPtr<uint64_t>()[i] = *(uint64_t*)hostAddr;
+        }
     }
 }
 
