@@ -61,9 +61,9 @@ class L2Cache(BaseCache):
     mshrs = 20
     tgts_per_mshr = 12
     write_buffers = 8
-    prefetch_on_access = 'true'
+    prefetch_on_access = 'false'
     # Simple stride prefetcher
-    prefetcher = StridePrefetcher(degree=8, latency = 1)
+    # prefetcher = StridePrefetcher(degree=8, latency = 1)
 
 class IOCache(BaseCache):
     assoc = 8
